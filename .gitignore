@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+
+# SQLite
+*.db
+*.db-journal
+*.db-wal
+
+# Build
+bin/

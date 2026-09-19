@@ -1,77 +1,64 @@
-# go-auth - Go REST API
+# go-auth Go REST API
 
-A scalable RESTful API built with **Go (Golang)** and **Gin**, following a clean and modular project structure. The project is designed to provide a solid foundation for building production-ready backend applications with database integration, authentication, validation, and automated testing.
+A scalable RESTful API built with **Go (Golang)** and **Gin**, following a clean and modular project structure. It provides a solid foundation for backend applications with SQLite database integration, authentication, validation, and automated testing.
 
 ## 🚀 Features
 
-* RESTful API development with Go and Gin
-* Modular project structure
-* User management
-* PostgreSQL database integration
-* GORM ORM
-* Environment-based configuration
-* Request validation
-* JSON API responses
-* Error handling
-* Middleware support
-* Authentication-ready architecture
-* Unit testing
-* API/integration testing
-* Clean and maintainable code structure
+- RESTful API development with Go and Gin
+- Modular project structure
+- User management (CRUD) + authentication
+- SQLite database integration (pure-Go driver — no CGO required)
+- GORM ORM
+- Environment-based configuration (`.env`)
+- Request validation
+- Consistent JSON API responses
+- Centralized error handling
+- JWT authentication middleware
+- Password hashing with bcrypt
+- Unit and integration tests
+- Clean, maintainable code structure
 
 ## 🛠️ Tech Stack
 
-* **Language:** Go
-* **Web Framework:** Gin
-* **Database:** PostgreSQL
-* **ORM:** GORM
-* **Testing:** Go Testing Package
-* **API:** REST
-* **Version Control:** Git
+- **Language:** Go
+- **Web Framework:** Gin
+- **Database:** SQLite
+- **SQLite Driver:** `github.com/glebarez/sqlite` (pure Go, no CGO)
+- **ORM:** GORM
+- **Auth:** JWT (`github.com/golang-jwt/jwt/v5`) + bcrypt
+- **Testing:** Go's built-in `testing` package
+- **API Style:** REST
+- **Version Control:** Git
 
 ## 📋 Requirements
 
-Before running the project, make sure you have installed:
+Make sure the following are installed:
 
-* Go 1.22+
-* PostgreSQL 14+
-* Git
+- Go 1.22+
+- Git
 
-Check your Go installation:
+> **No PostgreSQL or C compiler needed.** The SQLite driver is pure Go, so it works with `CGO_ENABLED=0`.
+
+Verify your setup:
 
 ```bash
 go version
 ```
 
-Check PostgreSQL:
-
-```bash
-psql --version
-```
-
 ## 📥 Installation
 
-Clone the repository:
+Clone the repository and move into the project directory:
 
 ```bash
 git clone https://github.com/your-username/your-repository.git
-```
-
-Move into the project directory:
-
-```bash
 cd your-repository
 ```
 
-Install Go dependencies:
+Install dependencies:
 
 ```bash
 go mod download
-```
-
-Or:
-
-```bash
+# or
 go mod tidy
 ```
 
@@ -83,49 +70,80 @@ Create a `.env` file in the project root:
 APP_ENV=development
 APP_PORT=8080
 
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=password
-DB_NAME=go_api
-DB_SSLMODE=disable
+DB_PATH=users.db
+
+JWT_SECRET=change-me-in-production
+JWT_EXPIRY_HOURS=24
 ```
 
-Make sure the database exists:
+The SQLite database file (`users.db`) is created automatically on first run. No manual database setup required.
 
-```sql
-CREATE DATABASE go_api;
-```
-
-## ▶️ Run the Application
-
-Run the application using:
+## ▶️ Running the Application
 
 ```bash
 go run .
-```
-
-Or:
-
-```bash
+# or
 go run main.go
+
+# If you ever hit a CGO issue:
+CGO_ENABLED=0 go run .
 ```
 
-The API will start on:
+The API will be available at:
 
 ```text
 http://localhost:8080
 ```
 
-You can test the application:
+Quick check:
 
 ```bash
 curl http://localhost:8080
 ```
 
+## 🔐 Authentication Flow
+
+1. **Register** a user → `POST /auth/register`
+2. **Login** → `POST /auth/login` → returns a JWT token
+3. **Access protected routes** by sending the token:
+
+```
+Authorization: Bearer <token>
+```
+
+## 🌐 API Endpoints
+
+| Method | Endpoint         | Auth | Description              |
+|--------|------------------|------|--------------------------|
+| GET    | `/`              | No   | Health check             |
+| POST   | `/auth/register` | No   | Create a new user        |
+| POST   | `/auth/login`    | No   | Login and get JWT token  |
+| GET    | `/api/users`     | Yes  | List all users           |
+| GET    | `/api/profile`   | Yes  | Get current user profile |
+
+## 🧪 API Testing
+
+You can test the API with **cURL**, **Postman**, **Insomnia**, or **HTTPie**.
+
+```bash
+# Register
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john","email":"john@example.com","password":"secret123"}'
+
+# Login (capture the token)
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"secret123"}'
+
+# Protected route
+curl http://localhost:8080/api/profile \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
 ## 🧪 Testing
 
-Go has a built-in testing framework, so you don't need to install an additional testing package for basic tests.
+Go ships with a built-in testing framework, so no extra tools are required for basic tests.
 
 ### Run all tests
 
@@ -133,7 +151,7 @@ Go has a built-in testing framework, so you don't need to install an additional 
 go test ./...
 ```
 
-### Run tests with detailed output
+### Verbose output
 
 ```bash
 go test -v ./...
@@ -142,101 +160,54 @@ go test -v ./...
 ### Run a specific package
 
 ```bash
-go test ./controllers
+go test ./handlers
 ```
 
 ### Run a specific test
 
 ```bash
-go test -run TestCreateUser ./...
+go test -run TestRegister ./...
 ```
 
-### Run tests with coverage
+### Coverage
 
 ```bash
 go test -cover ./...
-```
 
-### Generate a coverage report
-
-```bash
+# Generate an HTML coverage report
 go test ./... -coverprofile=coverage.out
-```
-
-Then view the coverage:
-
-```bash
 go tool cover -html=coverage.out
 ```
 
-This will open an HTML coverage report showing which parts of the application are covered by tests.
+### Example Unit Test
 
-## 🔬 Example Unit Test
-
-Create a test file using the `_test.go` suffix.
-
-For example:
-
-```text
-models/
-├── user.go
-└── user_test.go
-```
-
-Example:
+Create a file with the `_test.go` suffix, e.g. `utils/password_test.go`:
 
 ```go
-package models
+package utils
 
 import "testing"
 
-func TestUserModel(t *testing.T) {
-	user := User{
-		Name:  "John Doe",
-		Email: "john@example.com",
+func TestHashAndCheckPassword(t *testing.T) {
+	hashed, err := HashPassword("secret123")
+	if err != nil {
+		t.Fatalf("failed to hash: %v", err)
 	}
 
-	if user.Name == "" {
-		t.Error("user name should not be empty")
+	if !CheckPassword(hashed, "secret123") {
+		t.Error("expected password to match")
 	}
 
-	if user.Email == "" {
-		t.Error("user email should not be empty")
+	if CheckPassword(hashed, "wrongpassword") {
+		t.Error("expected password NOT to match")
 	}
 }
 ```
 
-Run:
+Run it:
 
 ```bash
-go test ./models
-```
-
-## 🌐 API Testing
-
-You can test the API using:
-
-* cURL
-* Postman
-* Insomnia
-* HTTPie
-
-Example:
-
-```bash
-curl http://localhost:8080/api/users
-```
-
-Create a user:
-
-```bash
-curl -X POST http://localhost:8080/api/users \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password"
-  }'
+go test ./utils
 ```
 
 ## 📁 Project Structure
@@ -245,25 +216,24 @@ curl -X POST http://localhost:8080/api/users \
 .
 ├── controllers/
 │   └── user_controller.go
-│
 ├── database/
-│   └── database.go
-│
-├── models/
+│   └── db.go
+├── handlers/
+│   ├── auth.go
 │   └── user.go
-│
-├── routes/
-│   └── routes.go
-│
-├── services/
-│   └── user_service.go
-│
 ├── middleware/
 │   └── auth.go
-│
+├── models/
+│   └── user.go
+├── routes/
+│   └── routes.go
+├── services/
+│   └── user_service.go
+├── utils/
+│   ├── jwt.go
+│   └── password.go
 ├── tests/
 │   └── ...
-│
 ├── .env
 ├── .gitignore
 ├── go.mod
@@ -273,143 +243,136 @@ curl -X POST http://localhost:8080/api/users \
 
 ## 🧩 Development Workflow
 
-### 1. Install dependencies
+1. **Install dependencies**
 
-```bash
-go mod download
-```
+   ```bash
+   go mod download
+   ```
 
-### 2. Run the application
+2. **Run the application**
 
-```bash
-go run .
-```
+   ```bash
+   go run .
+   ```
 
-### 3. Run tests
+3. **Run tests**
 
-```bash
-go test ./...
-```
+   ```bash
+   go test ./...
+   ```
 
-### 4. Check formatting
+4. **Format code**
 
-```bash
-gofmt -w .
-```
+   ```bash
+   gofmt -w .
+   ```
 
-### 5. Check the project
+5. **Static analysis**
 
-```bash
-go vet ./...
-```
+   ```bash
+   go vet ./...
+   ```
 
-### 6. Run tests with race detection
+6. **Race detection**
 
-```bash
-go test -race ./...
-```
+   ```bash
+   go test -race ./...
+   ```
 
-### 7. Build the application
+7. **Build**
 
-```bash
-go build -o bin/app .
-```
-
-Run the compiled application:
-
-```bash
-./bin/app
-```
+   ```bash
+   go build -o bin/app .
+   ./bin/app
+   ```
 
 ## 🔍 Code Quality
 
-Before submitting changes, run:
+Before committing or opening a PR:
 
 ```bash
 gofmt -w .
 go vet ./...
-go test ./...
-```
-
-For a more complete local check:
-
-```bash
 go test -race ./...
 ```
 
 ## 🔐 Security
 
-* Never commit `.env` files containing passwords or secrets.
-* Use environment variables for sensitive configuration.
-* Validate all incoming API requests.
-* Hash passwords before storing them.
-* Use HTTPS in production.
-* Apply authentication and authorization middleware where required.
+- Never commit `.env` files containing secrets.
+- Use environment variables for sensitive configuration (especially `JWT_SECRET`).
+- Validate all incoming requests.
+- Hash passwords with bcrypt before storing them.
+- Use the same "Invalid credentials" message for wrong email *and* wrong password (prevents user enumeration).
+- Serve over HTTPS in production.
+- Apply authentication and authorization middleware where required.
 
-Add `.env` to `.gitignore`:
+Add the following to `.gitignore`:
 
 ```gitignore
 .env
 .env.*
 !.env.example
+
+# SQLite
+*.db
+*.db-journal
+*.db-wal
+
+# Build
+bin/
 ```
 
-You can provide an example configuration:
+Provide an `.env.example` with placeholder values:
 
 ```env
 APP_ENV=development
 APP_PORT=8080
 
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=
-DB_NAME=go_api
-DB_SSLMODE=disable
+DB_PATH=users.db
+
+JWT_SECRET=
+JWT_EXPIRY_HOURS=24
 ```
 
 ## 🏗️ Build for Production
 
-Build the application:
-
 ```bash
-go build -o bin/app .
-```
-
-Run:
-
-```bash
+# Local build (no CGO needed)
+CGO_ENABLED=0 go build -o bin/app .
 ./bin/app
+
+# Linux build (cross-compile)
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/app .
 ```
 
-For Linux deployment:
+> **Tip:** Because the SQLite driver is pure Go, you get a fully static binary — perfect for Docker scratch images and simple deployment.
 
-```bash
-GOOS=linux GOARCH=amd64 go build -o bin/app .
+## 🐳 Optional: Docker
+
+```dockerfile
+FROM golang:1.22-alpine AS build
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o app .
+
+FROM alpine:latest
+WORKDIR /app
+COPY --from=build /app/app .
+EXPOSE 8080
+CMD ["./app"]
 ```
 
-## 🧪 Complete Test Process
-
-A recommended development test process is:
+## 🧪 Complete Pre-Deploy Check
 
 ```bash
-# Format
 gofmt -w .
-
-# Static analysis
 go vet ./...
-
-# Unit and integration tests
 go test ./...
-
-# Race-condition detection
 go test -race ./...
-
-# Test coverage
 go test ./... -cover
-
-# Build
-go build -o bin/app .
+CGO_ENABLED=0 go build -o bin/app .
 ```
 
 If all commands complete successfully, the project is ready for further API testing or deployment.
@@ -417,38 +380,20 @@ If all commands complete successfully, the project is ready for further API test
 ## 📌 Useful Go Commands
 
 ```bash
-# Initialize a project
-go mod init your-module-name
-
-# Install a dependency
-go get github.com/gin-gonic/gin
-
-# Download dependencies
-go mod download
-
-# Clean dependencies
-go mod tidy
-
-# Run application
-go run .
-
-# Run tests
-go test ./...
-
-# Run tests with verbose output
-go test -v ./...
-
-# Format code
-gofmt -w .
-
-# Static analysis
-go vet ./...
-
-# Build application
-go build .
-
-# View dependency information
-go list -m all
+go mod init your-module-name            # Initialize a module
+go get github.com/gin-gonic/gin         # Add a dependency
+go get github.com/glebarez/sqlite       # Pure-Go SQLite driver
+go get github.com/golang-jwt/jwt/v5     # JWT
+go get golang.org/x/crypto/bcrypt       # bcrypt
+go mod download                         # Download dependencies
+go mod tidy                             # Clean up dependencies
+go run .                                # Run the app
+go test ./...                           # Run all tests
+go test -v ./...                        # Verbose test output
+gofmt -w .                              # Format code
+go vet ./...                            # Static analysis
+CGO_ENABLED=0 go build .                # Build (static binary)
+go list -m all                          # List dependencies
 ```
 
 ## 🤝 Contributing
@@ -456,37 +401,27 @@ go list -m all
 1. Fork the repository.
 2. Create a feature branch:
 
-```bash
-git checkout -b feature/your-feature
-```
+   ```bash
+   git checkout -b feature/your-feature
+   ```
 
 3. Make your changes.
-4. Format the code:
+4. Format and test:
 
-```bash
-gofmt -w .
-```
+   ```bash
+   gofmt -w .
+   go test ./...
+   ```
 
-5. Run tests:
+5. Commit and push:
 
-```bash
-go test ./...
-```
+   ```bash
+   git add .
+   git commit -m "Add your feature"
+   git push origin feature/your-feature
+   ```
 
-6. Commit your changes:
-
-```bash
-git add .
-git commit -m "Add your feature"
-```
-
-7. Push the branch:
-
-```bash
-git push origin feature/your-feature
-```
-
-8. Open a Pull Request.
+6. Open a Pull Request.
 
 ## 📄 License
 
@@ -495,7 +430,6 @@ This project is licensed under the MIT License.
 ## 👨‍💻 Author
 
 **Abdul Bari**
-
 Full-Stack Developer | Senior Software Engineer | Engineering Team Lead
 
 ---

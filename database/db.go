@@ -14,6 +14,10 @@ func Connect() {
 	if err != nil {
 		panic("Failed to connect to database")
 	}
-	db.AutoMigrate(&models.User{})
+	// Both models must be listed
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}); err != nil {
+		panic("Failed to migrate: " + err.Error())
+	}
+
 	DB = db
 }

@@ -11,7 +11,6 @@ import (
 )
 
 // Profile returns the currently authenticated user's info.
-// Requires: AuthRequired() middleware (sets "user_id" in context).
 func Profile(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -30,7 +29,6 @@ func Profile(c *gin.Context) {
 }
 
 // ListUsers returns all users (without password fields).
-// Requires: AuthRequired() middleware.
 
 func ListUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -56,7 +54,7 @@ func ListUsers(c *gin.Context) {
 		return
 	}
 
-	// Build a lightweight response slice — never leak password hashes
+	// Lightweight response slice — never leak password hashes
 	type UserResponse struct {
 		ID        uint   `json:"id"`
 		Username  string `json:"username"`

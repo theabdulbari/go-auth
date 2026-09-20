@@ -28,7 +28,7 @@ type RefreshInput struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-// helper: issue both tokens and persist refresh token
+// helper: issue both tokens and persist refresh token (not used after added issueTokenPairTx). you may delete this (primary integration)
 func issueTokenPair(c *gin.Context, user models.User) (string, string, error) {
 	access, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
@@ -200,9 +200,9 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	// 🚨 Reuse detection: a revoked token was presented.
+	// Reuse detection: a revoked token was presented.
 	// This means either the token was stolen OR the user's token was already rotated.
-	// Safest action: revoke ALL of this user's refresh tokens → force re-login.
+	// Safest action: revoke ALL of this user's refresh tokens -> force re-login.
 	if existing.Revoked {
 		if err := database.DB.
 			Model(&models.RefreshToken{}).
@@ -230,7 +230,7 @@ func Refresh(c *gin.Context) {
 		return
 	}
 
-	// 🔒 Atomic rotation: revoke old + persist new in one transaction
+	// Atomic rotation: revoke old + persist new in one transaction
 	tx := database.DB.Begin()
 	if tx.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})

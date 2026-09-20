@@ -203,6 +203,7 @@ func Refresh(c *gin.Context) {
 	// Reuse detection: a revoked token was presented.
 	// This means either the token was stolen OR the user's token was already rotated.
 	// Safest action: revoke ALL of this user's refresh tokens -> force re-login.
+	// Safest way
 	if existing.Revoked {
 		if err := database.DB.
 			Model(&models.RefreshToken{}).

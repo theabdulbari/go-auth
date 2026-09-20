@@ -214,31 +214,52 @@ go test ./utils
 
 ```text
 .
+go-auth/
+│
+├── .github/
+│   └── workflows/
+│       └── ci.yml                    # GitHub Actions CI
+│
 ├── controllers/
-│   └── user_controller.go
+│   └── user_controller.go            # (optional) HTTP-level user handlers
+│
 ├── database/
-│   └── db.go
+│   └── db.go                         # SQLite connection + AutoMigrate
+│
 ├── handlers/
-│   ├── auth.go
-│   └── user.go
+│   ├── auth.go                       # Register, Login, Refresh, Logout, LogoutAll
+│   └── user.go                       # Profile, ListUsers
+│
 ├── middleware/
-│   └── auth.go
+│   ├── auth.go                       # JWT bearer auth middleware
+│   └── ratelimit.go                  # Per-IP token-bucket limiter
+│
 ├── models/
-│   └── user.go
+│   ├── user.go                       # User model
+│   └── refresh_token.go              # RefreshToken model
+│
 ├── routes/
-│   └── routes.go
+│   └── routes.go                     # SetupRouter() — all routes wired here
+│
 ├── services/
-│   └── user_service.go
+│   └── user_service.go               # (optional) business logic layer
+│
 ├── utils/
-│   ├── jwt.go
-│   └── password.go
+│   ├── jwt.go                        # Access + refresh token helpers
+│   └── password.go                   # bcrypt hash / verify
+│
 ├── tests/
-│   └── ...
-├── .env
+│   └── auth_test.go                  # Integration tests (httptest)
+│
+├── .env                              # Local secrets (NEVER commit)
+├── .env.example                      # Template for contributors
 ├── .gitignore
 ├── go.mod
 ├── go.sum
-└── main.go
+├── LICENSE
+├── README.md
+├── main.go                           # Entry point: loads env, starts server, graceful shutdown
+└── users.db                          # SQLite DB (auto-created, gitignored)
 ```
 
 ## 🧩 Development Workflow
